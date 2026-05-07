@@ -1,38 +1,25 @@
 import { NextRequest, NextResponse } from "next/server";
 import OpenAI from "openai";
+import { PERSONAS, type PersonaId, type TtsVoice } from "@/lib/personas";
 
 const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
-
-const SYSTEM_PROMPT = `You are Aria, a friendly and encouraging English conversation tutor.
-You help learners improve their English through natural conversation.
-
-Always respond in JSON format with these exact keys:
-{
-  "correction": "If the user made a grammar or vocabulary mistake, write the corrected sentence here. If no mistakes, write null.",
-  "reply": "Your conversational response in English. Keep it natural, warm, and under 3 sentences.",
-  "emotion": "One of: neutral, happy, sad, surprised, thinking"
-}
-
-Rules:
-- Be encouraging and positive
-- Gently correct mistakes without being harsh
-- Keep replies concise and conversational
-- Match emotion to the context of the conversation`;
 
 export async function POST(req: NextRequest) {
   try {
     const form = await req.formData();
     const audioFile = form.get("audio") as File;
+    const personaId = (form.get("personaId") as PersonaId) ?? "kai";
 
     if (!audioFile) {
       return NextResponse.json({ error: "No audio file" }, { status: 400 });
     }
 
-    // STT with Whisper
+    const persona = PERSONAS[personaId] ?? PERSONAS.kai;
+
+    // STT — allow both English and Korean input
     const transcription = await openai.audio.transcriptions.create({
       file: audioFile,
       model: "whisper-1",
-      language: "en",
     });
     const transcript = transcription.text.trim();
 
@@ -43,15 +30,15 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    // LLM with GPT-4o
+    // LLM with persona's system prompt
     const completion = await openai.chat.completions.create({
       model: "gpt-4o",
       messages: [
-        { role: "system", content: SYSTEM_PROMPT },
+        { role: "system", content: persona.systemPrompt },
         { role: "user", content: transcript },
       ],
       response_format: { type: "json_object" },
-      max_tokens: 300,
+      max_tokens: 350,
     });
 
     const rawJson = completion.choices[0].message.content ?? "{}";
@@ -59,13 +46,16 @@ export async function POST(req: NextRequest) {
     try {
       parsed = JSON.parse(rawJson);
     } catch {
-      parsed = { reply: "I didn't quite catch that. Could you try again?", emotion: "neutral" };
+      parsed = {
+        reply: "I didn't quite catch that. Could you try again?",
+        emotion: "neutral",
+      };
     }
 
-    // TTS
+    // TTS with persona's voice
     const ttsResponse = await openai.audio.speech.create({
       model: "tts-1",
-      voice: "nova",
+      voice: persona.voice as TtsVoice,
       input: parsed.reply,
       response_format: "mp3",
     });

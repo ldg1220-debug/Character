@@ -3,6 +3,7 @@
 import { useEffect, useRef, useState, useCallback } from "react";
 import { useCharacterStore } from "@/store/useCharacterStore";
 import { useAudioAnalyzer } from "@/hooks/useAudioAnalyzer";
+import { PERSONAS } from "@/lib/personas";
 import type { Emotion } from "@/store/useCharacterStore";
 
 export default function ChatUI() {
@@ -11,6 +12,7 @@ export default function ChatUI() {
     isRecording,
     isProcessing,
     isSpeaking,
+    currentPersona,
     addMessage,
     setIsRecording,
     setIsProcessing,
@@ -18,6 +20,7 @@ export default function ChatUI() {
   } = useCharacterStore();
 
   const { playAudio } = useAudioAnalyzer();
+  const persona = PERSONAS[currentPersona];
   const mediaRecorderRef = useRef<MediaRecorder | null>(null);
   const chunksRef = useRef<Blob[]>([]);
   const messagesEndRef = useRef<HTMLDivElement>(null);
@@ -48,9 +51,10 @@ export default function ChatUI() {
       mediaRecorderRef.current = mr;
       setIsRecording(true);
     } catch {
-      setError("Microphone access denied. Please allow microphone access.");
+      setError("Microphone access denied.");
     }
-  }, [setIsRecording]);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [setIsRecording, currentPersona]);
 
   const stopRecording = useCallback(() => {
     mediaRecorderRef.current?.stop();
@@ -62,6 +66,7 @@ export default function ChatUI() {
     try {
       const form = new FormData();
       form.append("audio", blob, "recording.webm");
+      form.append("personaId", currentPersona);
 
       const res = await fetch("/api/chat", { method: "POST", body: form });
       if (!res.ok) throw new Error("API error");
@@ -96,28 +101,35 @@ export default function ChatUI() {
     : isProcessing
     ? "Processing..."
     : isSpeaking
-    ? "Speaking..."
+    ? `${persona.name} is speaking...`
     : "Hold to speak";
+
+  const micBgIdle = {
+    sunny: "bg-amber-400 shadow-[0_0_20px_rgba(251,191,36,0.5)]",
+    aria: "bg-purple-400 shadow-[0_0_20px_rgba(192,132,252,0.5)]",
+    kai: "bg-sky-400 shadow-[0_0_20px_rgba(56,189,248,0.5)]",
+    sterling: "bg-slate-400 shadow-[0_0_20px_rgba(148,163,184,0.4)]",
+  }[currentPersona];
 
   return (
     <div className="absolute inset-0 flex flex-col pointer-events-none">
-      {/* Chat messages */}
+      {/* Messages */}
       <div className="flex-1 flex flex-col justify-end px-4 pb-2 overflow-hidden">
-        <div className="max-h-64 overflow-y-auto scrollbar-hide flex flex-col gap-2 pointer-events-auto">
+        <div className="max-h-56 overflow-y-auto scrollbar-hide flex flex-col gap-2 pointer-events-auto">
           {messages.map((msg) => (
             <div
               key={msg.id}
               className={`flex ${msg.role === "user" ? "justify-end" : "justify-start"}`}
             >
               <div
-                className={`max-w-xs lg:max-w-md px-4 py-3 rounded-2xl text-sm ${
-                  msg.role === "user"
-                    ? "bg-accent text-black rounded-tr-sm"
-                    : "bg-white/10 backdrop-blur-sm text-white rounded-tl-sm border border-white/20"
-                }`}
+                className={`max-w-[75%] px-4 py-3 rounded-2xl text-sm leading-relaxed
+                  ${msg.role === "user"
+                    ? "bg-white/15 text-white rounded-tr-sm"
+                    : "bg-black/40 backdrop-blur-sm text-white/90 rounded-tl-sm border border-white/10"
+                  }`}
               >
                 {msg.correction && (
-                  <p className="text-xs text-orange-300 mb-1 italic">
+                  <p className="text-xs text-orange-300 mb-1.5 italic leading-tight">
                     ✏️ {msg.correction}
                   </p>
                 )}
@@ -138,22 +150,21 @@ export default function ChatUI() {
 
       {/* Bottom controls */}
       <div className="flex flex-col items-center gap-3 pb-8 pointer-events-auto">
-        <p className="text-white/60 text-sm">{statusText}</p>
+        <p className="text-white/50 text-xs tracking-wide">{statusText}</p>
 
-        {/* Mic button */}
         <button
           onMouseDown={startRecording}
           onMouseUp={stopRecording}
-          onTouchStart={startRecording}
+          onTouchStart={(e) => { e.preventDefault(); startRecording(); }}
           onTouchEnd={stopRecording}
           disabled={isProcessing || isSpeaking}
-          className={`w-20 h-20 rounded-full flex items-center justify-center text-3xl transition-all duration-200 select-none
-            ${
-              isRecording
-                ? "bg-red-500 scale-110 shadow-[0_0_30px_rgba(239,68,68,0.7)]"
-                : isProcessing || isSpeaking
-                ? "bg-white/20 cursor-not-allowed"
-                : "bg-accent hover:scale-105 shadow-[0_0_20px_rgba(222,255,154,0.4)] active:scale-95"
+          className={`w-20 h-20 rounded-full flex items-center justify-center text-3xl
+            transition-all duration-150 select-none touch-none
+            ${isRecording
+              ? "bg-red-500 scale-110 shadow-[0_0_32px_rgba(239,68,68,0.8)]"
+              : isProcessing || isSpeaking
+              ? "bg-white/15 cursor-not-allowed scale-95"
+              : `${micBgIdle} hover:scale-105 active:scale-95`
             }`}
         >
           {isProcessing ? "⏳" : isRecording ? "🔴" : isSpeaking ? "🔊" : "🎤"}

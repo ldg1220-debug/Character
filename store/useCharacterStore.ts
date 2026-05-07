@@ -1,4 +1,5 @@
 import { create } from "zustand";
+import { type PersonaId, DEFAULT_PERSONA, PERSONAS } from "@/lib/personas";
 
 export type Emotion = "neutral" | "happy" | "sad" | "surprised" | "thinking";
 
@@ -18,29 +19,36 @@ interface CharacterStore {
   isSpeaking: boolean;
   currentEmotion: Emotion;
   audioVolume: number;
+  currentPersona: PersonaId;
   addMessage: (msg: Omit<Message, "id" | "timestamp">) => void;
   setIsRecording: (val: boolean) => void;
   setIsProcessing: (val: boolean) => void;
   setIsSpeaking: (val: boolean) => void;
   setCurrentEmotion: (emotion: Emotion) => void;
   setAudioVolume: (volume: number) => void;
+  setPersona: (id: PersonaId) => void;
+}
+
+function makeWelcomeMessage(personaId: PersonaId): Message {
+  const persona = PERSONAS[personaId];
+  return {
+    id: "welcome",
+    role: "assistant",
+    text: persona.greeting,
+    emotion: "happy",
+    timestamp: new Date(),
+  };
 }
 
 export const useCharacterStore = create<CharacterStore>((set) => ({
-  messages: [
-    {
-      id: "welcome",
-      role: "assistant",
-      text: "Hello! I'm your AI English tutor. Hold the mic button and start speaking. I'll help you improve your English!",
-      emotion: "happy",
-      timestamp: new Date(),
-    },
-  ],
+  messages: [makeWelcomeMessage(DEFAULT_PERSONA)],
   isRecording: false,
   isProcessing: false,
   isSpeaking: false,
   currentEmotion: "neutral",
   audioVolume: 0,
+  currentPersona: DEFAULT_PERSONA,
+
   addMessage: (msg) =>
     set((state) => ({
       messages: [
@@ -53,4 +61,14 @@ export const useCharacterStore = create<CharacterStore>((set) => ({
   setIsSpeaking: (val) => set({ isSpeaking: val }),
   setCurrentEmotion: (emotion) => set({ currentEmotion: emotion }),
   setAudioVolume: (volume) => set({ audioVolume: volume }),
+
+  setPersona: (id) =>
+    set({
+      currentPersona: id,
+      messages: [makeWelcomeMessage(id)],
+      currentEmotion: "neutral",
+      isRecording: false,
+      isProcessing: false,
+      isSpeaking: false,
+    }),
 }));
