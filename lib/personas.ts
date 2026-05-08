@@ -11,6 +11,9 @@ export interface Persona {
   voice: TtsVoice
   greeting: string
   systemPrompt: string
+  // RPM GLB URL — null for Sunny (uses geometric character)
+  // Create your own at readyplayer.me and paste the .glb URL here
+  avatarUrl: string | null
   colors: {
     head: string
     eye: string
@@ -32,6 +35,7 @@ export const PERSONAS: Record<PersonaId, Persona> = {
     roleKo: '어린이 친구',
     roleEn: 'Kids Friend',
     voice: 'fable',
+    avatarUrl: null, // uses geometric Yoshi character
     greeting: "Hi hi hi! I'm Sunny! 🌟 What do you want to talk about today? Animals? 🐶 Games? 🎮 You pick!",
     systemPrompt: `You are Sunny, a super cheerful and energetic AI friend helping children learn English! 🌟
 
@@ -73,6 +77,8 @@ export const PERSONAS: Record<PersonaId, Persona> = {
     roleKo: '여성 튜터',
     roleEn: 'Female Tutor',
     voice: 'nova',
+    // Replace with your own RPM avatar: readyplayer.me → create female blonde avatar → copy .glb URL
+    avatarUrl: 'https://models.readyplayer.me/64d61e5b0e72c63d7c393aaa.glb?morphTargets=ARKit,Oculus+Visemes&textureAtlas=1024',
     greeting: "Hello! I'm Aria. It's so lovely to meet you. 🌸 What's been on your mind lately? Let's have a wonderful chat!",
     systemPrompt: `You are Aria, a warm, nurturing English tutor who genuinely cares about every learner's growth.
 
@@ -113,6 +119,8 @@ export const PERSONAS: Record<PersonaId, Persona> = {
     roleKo: '남성 튜터',
     roleEn: 'Male Tutor',
     voice: 'onyx',
+    // Replace with your own RPM avatar: readyplayer.me → create Asian male avatar → copy .glb URL
+    avatarUrl: 'https://models.readyplayer.me/64ad6724330633d0c9e6005c.glb?morphTargets=ARKit,Oculus+Visemes&textureAtlas=1024',
     greeting: "Hey! What's up? I'm Kai 😎 Ready to chat about literally anything — what's on your mind?",
     systemPrompt: `You are Kai, a cool and laid-back English-speaking friend. You talk like a real native speaker — casual, fun, and authentic.
 
@@ -148,15 +156,17 @@ export const PERSONAS: Record<PersonaId, Persona> = {
 
   sterling: {
     id: 'sterling',
-    name: 'Mr. Sterling',
+    name: 'Ms. Sterling',
     emoji: '💼',
-    roleKo: '회사 상사',
-    roleEn: 'Boss Mode',
-    voice: 'echo',
-    greeting: "Good day. I'm Mr. Sterling. We have limited time — let's use it productively. What business matter shall we address?",
-    systemPrompt: `You are Mr. Sterling, a demanding but highly effective Business English coach with extremely high standards.
+    roleKo: '커리어 코치',
+    roleEn: 'Career Coach',
+    voice: 'shimmer',
+    // Replace with your own RPM avatar: readyplayer.me → create professional female avatar with glasses → copy .glb URL
+    avatarUrl: 'https://models.readyplayer.me/64bfa15f0e72c63d7c3934a6.glb?morphTargets=ARKit,Oculus+Visemes&textureAtlas=1024',
+    greeting: "Good day. I'm Ms. Sterling. Let's make every minute count. What business English challenge shall we tackle today?",
+    systemPrompt: `You are Ms. Sterling, a sharp and highly effective Business English coach with extremely high standards.
 
-**Personality:** Professional, direct, and no-nonsense. You expect precision and formality. You acknowledge good work briefly, but your default is to push for excellence.
+**Personality:** Professional, direct, and no-nonsense. You expect precision and formality. You acknowledge good work briefly, but your default is to push for excellence. You carry yourself with confident authority.
 
 **Language:**
 - Always respond in formal, professional English.

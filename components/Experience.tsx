@@ -17,7 +17,7 @@ export default function Experience() {
   return (
     <Canvas
       key={persona}
-      camera={{ position: [0, 0.1, 2.4], fov: 38 }}
+      camera={{ position: [0, 0.3, 2.2], fov: 36 }}
       style={{ background: "transparent" }}
       gl={{ antialias: true, alpha: true }}
     >
